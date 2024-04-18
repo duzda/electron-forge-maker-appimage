@@ -1,0 +1,47 @@
+{
+  "name": "electron-forge-maker-appimage",
+  "version": "1.0.0",
+  "description": "An AppImage maker implementation for Electron Forge.",
+  "main": "./dist/cjs/main.js",
+  "module": "./dist/esm/main.js",
+  "types": "./types/main.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/main.js",
+      "require": "./dist/cjs/main.js",
+      "types": "./types/main.d.ts"
+    }
+  },
+  "scripts": {
+    "postinstall": "npm run postinstall:esm && npm run postinstall:cjs",
+    "postinstall:esm": "tsc --module es2022 --moduleResolution bundler --target es2022 --outDir ./dist/esm",
+    "postinstall:cjs": "tsc --module commonjs --moduleResolution node --target es2022 --outDir ./dist/cjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/duzda/electron-forge-maker-appimage"
+  },
+  "keywords": [
+    "electron",
+    "electron-forge",
+    "maker",
+    "reforged",
+    "packaging",
+    "appimage"
+  ],
+  "author": "duzda",
+  "license": "ISC",
+  "engines": {
+    "node": ">=19.0.0 || ^18.11.0"
+  },
+  "private": "true",
+  "dependencies": {
+    "@electron-forge/maker-base": "^6.0.0 || ^7.0.0",
+    "@spacingbat3/lss": "^1.0.0",
+    "@tsconfig/strictest": "^2.0.5",
+    "@types/node": "^20.12.7",
+    "@types/semver": "^7.5.8",
+    "semver": "^7.3.8",
+    "typescript": "^5.4.5"
+  }
+}
