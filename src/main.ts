@@ -1,6 +1,5 @@
 (process as {setSourceMapsEnabled?:(arg0:boolean)=>void}).setSourceMapsEnabled?.(true);
 
-import { createHash, getHashes } from "crypto";
 import { tmpdir } from "os";
 import { resolve, dirname, extname, relative } from "path";
 import {
@@ -36,14 +35,9 @@ import type MakerAppImageConfig from "../types/config.d.ts";
 import type { MakerMeta } from "./utils.js";
 
 const enum RemoteDefaults {
-  MirrorHost = 'https://github.com/AppImage/',
-  MirrorPath = '/releases/download/',
-  MirrorAK = 'AppImageKit',
-  MirrorT2R = 'type2-runtime',
+  Mirror = 'https://github.com/AppImage/type2-runtime/releases/download/',
   /** Currently supported release of AppImageKit distributables. */
-  Tag = 13,
-  Dir = "{{ version }}",
-  FileName = "{{ filename }}-{{ arch }}",
+  Tag = "continuous",
 }
 
 
@@ -111,17 +105,8 @@ export default class MakerAppImage extends MakerBase<MakerAppImageConfig> {
     /** A URL-like object from which assets will be downloaded. */
     const remote = {
       mirror: {
-        runtime: type2runtime ?
-          `${RemoteDefaults.MirrorHost}${RemoteDefaults.MirrorT2R}${RemoteDefaults.MirrorPath}` :
-          process.env["REFORGED_APPIMAGEKIT_MIRROR"] ??
-            process.env["APPIMAGEKIT_MIRROR"] ??
-            `${RemoteDefaults.MirrorHost}${RemoteDefaults.MirrorAK}${RemoteDefaults.MirrorPath}`,
-        AppRun: process.env["REFORGED_APPIMAGEKIT_MIRROR"] ??
-          process.env["APPIMAGEKIT_MIRROR"] ??
-          `${RemoteDefaults.MirrorHost}${RemoteDefaults.MirrorAK}${RemoteDefaults.MirrorPath}`
+        runtime: `${RemoteDefaults.Mirror}${RemoteDefaults.Tag}/runtime-${appImageArch}`
       },
-      dir: process.env["REFORGED_APPIMAGEKIT_CUSTOM_DIR"] ?? process.env["APPIMAGEKIT_CUSTOM_DIR"] ?? RemoteDefaults.Dir,
-      file: process.env["REFORGED_APPIMAGEKIT_CUSTOM_FILENAME"] ?? process.env["APPIMAGEKIT_CUSTOM_FILENAME"] ?? RemoteDefaults.FileName
     };
     /** Node.js friendly name of the application. */
     const name = sanitizeName(this.config.options?.name ?? packageJSON.name as string);
@@ -150,7 +135,7 @@ export default class MakerAppImage extends MakerBase<MakerAppImageConfig> {
     const sources = Object.freeze({
       /** Details about the AppImage runtime. */
       runtime: Object.freeze({
-        data: fetch(parseMirror(`${remote.mirror.runtime}${remote.dir}/${remote.file}`,currentTag,"runtime"))
+        data: fetch(parseMirror(`${remote.mirror.runtime}`,currentTag,"runtime"))
           .then(response => {
             if(response.ok)
               return response.arrayBuffer()
@@ -158,17 +143,6 @@ export default class MakerAppImage extends MakerBase<MakerAppImageConfig> {
               throw new Error(`Runtime request failure (${response.status}: ${response.statusText}).`)
           }),
         md5: mapHash.runtime[mapArch(targetArch)]
-      }),
-      /** Details about AppRun ELF executable, used to start the app. */
-      AppRun: Object.freeze({
-        data: fetch(parseMirror(`${remote.mirror.AppRun}${remote.dir}/${remote.file}`,currentTag,"AppRun"))
-          .then(response => {
-            if(response.ok)
-              return response.arrayBuffer()
-            else
-              throw new Error(`AppRun request failure (${response.status}: ${response.statusText}).`)
-          }),
-        md5: mapHash.AppRun[mapArch(targetArch)]
       }),
       /** Details about the generated `.desktop` file. */
       desktop: typeof this.config.options?.desktopFile === "string" ?
@@ -244,6 +218,7 @@ export default class MakerAppImage extends MakerBase<MakerAppImageConfig> {
       )
     }
     const iconPath = icon ? resolve(workDir, name+extname(icon)) : undefined;
+    const binPath = resolve(directories.bin,bin)
     /** First-step jobs, which does not depend on any other job. */
     const earlyJobs = [
       // Create further directory tree (0,1,2)
@@ -256,21 +231,8 @@ export default class MakerAppImage extends MakerBase<MakerAppImageConfig> {
         .then(data => writeFile(
           resolve(workDir, productName+'.desktop'), data, {mode:0o755, encoding: "utf-8"})
         ),
-      // Verify and save `AppRun` to file (4)
-      sources.AppRun.data
-        .then(data => {
-          const buffer = Buffer.from(data);
-          if(currentTag === RemoteDefaults.Tag) {
-            if(!getHashes().includes("md5"))
-              throw new Error("MD5 is not supported by 'node:crypto'.");
-            const hash = createHash("md5")
-              .update(buffer)
-              .digest('hex');
-            if(hash !== sources.AppRun.md5)
-              throw new Error("AppRun hash mismatch.");
-          }
-          return writeFile(resolve(workDir, 'AppRun'), buffer, {mode: 0o755});
-        }),
+      // Create `AppRun` as a link to bin/ (4)
+      symlink(relative(workDir,binPath),resolve(workDir,"AppRun"),"file"),
       // Save icon to file and symlink it as `.DirIcon` (5)
       icon ? iconPath && existsSync(icon) ?
         copyFile(icon, iconPath)
