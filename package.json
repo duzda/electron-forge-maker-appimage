@@ -1,6 +1,6 @@
 {
   "name": "electron-forge-maker-appimage",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "An AppImage maker implementation for Electron Forge.",
   "main": "./dist/cjs/main.js",
   "module": "./dist/esm/main.js",
