@@ -1,5 +1,4 @@
 import EventEmitter from "events";
-import { createHash, getHashes } from "crypto";
 import { Mode, existsSync } from "fs";
 import { execFileSync } from "child_process";
 
