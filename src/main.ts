@@ -89,6 +89,7 @@ export default class MakerAppImage extends MakerBase<MakerAppImageConfig> {
       categories,
       compressor,
       genericName,
+      mimeType,
       flagsFile,
       type2runtime
     } = (this.config.options ?? {});
@@ -157,6 +158,7 @@ export default class MakerAppImage extends MakerBase<MakerAppImageConfig> {
           Categories: categories ?
             categories.join(';')+';' :
             undefined,
+          MimeType: mimeType,
           "X-AppImage-Name": name,
           "X-AppImage-Version": packageJSON.version,
           "X-AppImage-Arch": mapArch(targetArch)

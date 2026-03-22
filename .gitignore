@@ -4,4 +4,5 @@ node_modules/
 !types/
 types/*
 !types/config.d.ts
+!types/db.d.ts
 package-lock.json

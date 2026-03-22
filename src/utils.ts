@@ -103,7 +103,7 @@ interface mkSqFsEvt extends EventEmitter {
   emit(..._:mkSqFSEvtEmit<"error">): boolean;
 }
 
-export function generateDesktop(desktopEntry: Partial<Record<string,string|null>>, actions?: Record<string,Partial<Record<string,string|null>>&{ Name: string }>) {
+export function generateDesktop(desktopEntry: Partial<Record<string,string[]|string|null>>, actions?: Record<string,Partial<Record<string,string|null>>&{ Name: string }>) {
   function toEscapeSeq<T>(string:T): T extends string ? string : T {
     if(typeof string === "string")
       return string

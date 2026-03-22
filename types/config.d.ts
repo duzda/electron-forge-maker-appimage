@@ -1,3 +1,5 @@
+import { OfficialMimeTypes } from "./db.d.ts";
+
 export interface MakerAppImageConfigOptions {
     /**
      * Name of the package (used as folder name, `X-AppImage-Name` etc).
@@ -118,6 +120,17 @@ export interface MakerAppImageConfigOptions {
      * @experimental
      */
     type2runtime?: boolean
+    /**
+     * MIME types to associate with given desktop file.
+     *
+     * @remarks
+     * Can be used to associate custom protocols with `x-scheme-handler/[protocol]`.
+     */
+    mimeType?: (
+      | OfficialMimeTypes
+      | `${MimeGroups}/${"vnd." | "x-"}${string}`
+      | `${"x-" | "vnd."}${string}/${string}`
+    )[];
 }
 
 export interface MakerAppImageConfig {
